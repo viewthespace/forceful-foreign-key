@@ -34,11 +34,24 @@ describe ForcefulForeignKey do
 
   end
 
-  it 'forcefully adds' do
+  it 'is disabled by default' do
 
-    ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: true
+    expect do
+      ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: false
+    end.to raise_error(ActiveRecord::InvalidForeignKey)
 
   end
 
+  it 'creates foreign key constraint when enabled' do
+
+    ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: true
+
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(0)
+
+  end
 
 end

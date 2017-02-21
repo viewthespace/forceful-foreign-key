@@ -5,8 +5,8 @@ require 'pry'
 require "forceful_foreign_key"
 require 'database_cleaner'
 
-`createdb forceful_foreign_key_test`
-`createuser -s forceful_foreign_key_test`
+`createdb forceful_foreign_key_test > /dev/null 2>&1`
+`createuser -s forceful_foreign_key_test > /dev/null 2>&1`
 
 ActiveRecord::Base.establish_connection(
   :adapter  => "postgresql",

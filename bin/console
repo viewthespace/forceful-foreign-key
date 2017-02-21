@@ -4,7 +4,7 @@ require "bundler/setup"
 require 'active_record'
 require "forceful_foreign_key"
 
-`createdb -O forceful_foreign_key_dev > /dev/null 2>&1`
+`createdb forceful_foreign_key_dev > /dev/null 2>&1`
 `createuser -s forceful_foreign_key_dev > /dev/null 2>&1`
 
 ActiveRecord::Base.establish_connection(
