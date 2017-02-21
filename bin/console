@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require 'active_record'
+require "forceful_foreign_key"
+
+`createdb -O forceful_foreign_key_dev > /dev/null 2>&1`
+`createuser -s forceful_foreign_key_dev > /dev/null 2>&1`
+
+ActiveRecord::Base.establish_connection(
+  :adapter  => "postgresql",
+  :host     => "localhost",
+  :username => "forceful_foreign_key_dev",
+  :password => "",
+  :database => "forceful_foreign_key_dev"
+)
+
+require "irb"
+IRB.start
