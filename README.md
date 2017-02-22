@@ -1,5 +1,7 @@
 # ForcefulForeignKey
 
+When `force: true` is set, It will delete orphaned data before applying the foreign key constraint. Use cautiously!
+
 ```Ruby
 class AddFKContraint < ActiveRecord::Migration
   def change
