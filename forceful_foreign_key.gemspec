@@ -9,8 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["shaw3257"]
   spec.email         = ["shaw3257@gmail.com"]
 
-  spec.summary       = "Forcefully creates a foreign key"
-  spec.description   = "Forcefully creates a foreign key and will recursively delete"
+  spec.summary       = "ActiveRecord extension that adds an option to add_foreign_key to delete orphaned data."
+  spec.description   = "When force: true is set, It will delete orphaned data before applying the foreign
+                        key constraint. Use cautiously!"
   spec.homepage      = "https://github.com/viewthespace/forceful-foreign-key"
   spec.license       = "MIT"
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
