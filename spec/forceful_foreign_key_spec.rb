@@ -11,11 +11,11 @@ describe ForcefulForeignKey do
     end
 
     ActiveRecord::Base.connection.create_table('a_b_c') do |t|
-      t.column :b_id, :integer
+      t.column :a_b_id, :integer
     end
 
     ActiveRecord::Base.connection.create_table('a_b_c_d') do |t|
-      t.column :c_id, :integer
+      t.column :a_b_c_id, :integer
     end
 
     ActiveRecord::Base.connection.execute("INSERT INTO a values (1)")
@@ -37,20 +37,107 @@ describe ForcefulForeignKey do
   it 'is disabled by default' do
 
     expect do
+      ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a'
+    end.to raise_error(ActiveRecord::InvalidForeignKey)
+
+  end
+
+  it 'respects false value' do
+
+    expect do
       ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: false
     end.to raise_error(ActiveRecord::InvalidForeignKey)
 
   end
 
-  it 'creates foreign key constraint when enabled' do
-
-    ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: true
+  it 'creates foreign key constraints (top down)' do
 
     expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(1)
 
+    ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: true
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
     expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
     expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(0)
     expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(1)
+
+    ActiveRecord::Base.connection.add_foreign_key 'a_b_c', 'a_b', force: true
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(1)
+
+    ActiveRecord::Base.connection.add_foreign_key 'a_b_c_d', 'a_b_c', force: true
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(0)
+
+  end
+
+  it 'creates foreign key constraints (bottom up)' do
+
+    ActiveRecord::Base.connection.add_foreign_key 'a_b_c_d', 'a_b_c', force: true
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(0)
+
+    ActiveRecord::Base.connection.add_foreign_key 'a_b_c', 'a_b', force: true
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(0)
+
+    ActiveRecord::Base.connection.add_foreign_key 'a_b', 'a', force: true
+    expect(ActiveRecord::Base.connection.execute('select id from a where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c where id = 3').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 1').ntuples).to eq(1)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 2').ntuples).to eq(0)
+    expect(ActiveRecord::Base.connection.execute('select id from a_b_c_d where id = 3').ntuples).to eq(0)
 
   end
 
